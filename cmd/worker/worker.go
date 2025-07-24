@@ -128,6 +128,7 @@ func (c *Command) Start(ctx context.Context) error {
 		if err != nil {
 			return fmt.Errorf("failed to create direct kubelet kubeconfig: %w", err)
 		}
+		logrus.Infof("Using direct kubelet kubeconfig: %s", directKubeconfigPath)
 		kubeletKubeconfigPath = directKubeconfigPath
 	}
 
@@ -203,6 +204,7 @@ func (c *Command) Start(ctx context.Context) error {
 
 	componentManager.Add(ctx, &worker.Autopilot{
 		K0sVars:     c.K0sVars,
+		Kubeconfig:  kubeletKubeconfigPath,
 		CertManager: certManager,
 	})
 

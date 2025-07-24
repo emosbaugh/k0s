@@ -42,6 +42,7 @@ var _ manager.Component = (*Autopilot)(nil)
 
 type Autopilot struct {
 	K0sVars     *config.CfgVars
+	Kubeconfig  string
 	CertManager *CertificateManager
 }
 
@@ -85,7 +86,7 @@ func (a *Autopilot) Start(ctx context.Context) error {
 
 	log.Info("Autopilot client factory created, booting up worker root controller")
 	autopilotRoot, err := apcont.NewRootWorker(aproot.RootConfig{
-		KubeConfig:          a.K0sVars.KubeletAuthConfigPath,
+		KubeConfig:          a.Kubeconfig,
 		K0sDataDir:          a.K0sVars.DataDir,
 		Mode:                "worker",
 		ManagerPort:         8899,
