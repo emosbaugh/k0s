@@ -119,31 +119,35 @@ func (c *Command) Start(ctx context.Context) error {
 
 	componentManager := manager.New(prober.DefaultProber)
 
-	var staticPods worker.StaticPods
-
-	if workerConfig.NodeLocalLoadBalancing.IsEnabled() {
-		if c.SingleNode {
-			return errors.New("node-local load balancing cannot be used in a single-node cluster")
-		}
-	}
-
 	// When upgrading controller+worker nodes in a multi-node cluster with a load balancer, the API
 	// server address needs to be overridden to point to the local API server. This is needed so
 	// that the kubelet will not connect to an API server that is running a previous version of
 	// k0s which would violate the Kubernetes version skew policy.
-	if !c.SingleNode && !c.EnableWorker {
+	if c.SingleNode || c.EnableWorker {
 		directKubeconfigPath, err := worker.CreateDirectKubeletKubeconfig(ctx, c.K0sVars)
 		if err != nil {
 			return fmt.Errorf("failed to create direct kubelet kubeconfig: %w", err)
 		}
 		kubeletKubeconfigPath = directKubeconfigPath
-	} else if workerConfig.NodeLocalLoadBalancing.IsEnabled() {
+	}
+
+	var staticPods worker.StaticPods
+
+	if workerConfig.NodeLocalLoadBalancing.IsEnabled() {
+		if c.SingleNode || c.EnableWorker {
+			return errors.New("node-local load balancging cannot be used in a single-node cluster")
+		}
+
 		sp := worker.NewStaticPods()
 		reconciler, err := nllb.NewReconciler(c.K0sVars, sp, c.WorkerProfile, *workerConfig.DeepCopy())
 		if err != nil {
 			return fmt.Errorf("failed to create node-local load balancer reconciler: %w", err)
 		}
-		kubeletKubeconfigPath = reconciler.GetKubeletKubeconfigPath()
+		// If this is a controller+worker node, the kubelet should not use the NLLB kubelet kubeconfig
+		// path.
+		if controller == nil {
+			kubeletKubeconfigPath = reconciler.GetKubeletKubeconfigPath()
+		}
 		staticPods = sp
 
 		componentManager.Add(ctx, sp)
