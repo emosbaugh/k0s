@@ -134,8 +134,8 @@ func (c *Command) Start(ctx context.Context) error {
 	var staticPods worker.StaticPods
 
 	if workerConfig.NodeLocalLoadBalancing.IsEnabled() {
-		if c.SingleNode || c.EnableWorker {
-			return errors.New("node-local load balancging cannot be used in a single-node cluster")
+		if c.SingleNode {
+			return errors.New("node-local load balancing cannot be used in a single-node cluster")
 		}
 
 		sp := worker.NewStaticPods()
@@ -145,7 +145,7 @@ func (c *Command) Start(ctx context.Context) error {
 		}
 		// If this is a controller+worker node, the kubelet should not use the NLLB kubelet kubeconfig
 		// path.
-		if controller == nil {
+		if !c.SingleNode && !c.EnableWorker {
 			kubeletKubeconfigPath = reconciler.GetKubeletKubeconfigPath()
 		}
 		staticPods = sp
