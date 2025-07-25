@@ -204,7 +204,7 @@ func (c *Command) Start(ctx context.Context) error {
 
 	componentManager.Add(ctx, &worker.Autopilot{
 		K0sVars:     c.K0sVars,
-		Kubeconfig:  kubeletKubeconfigPath,
+		Kubeconfig:  c.K0sVars.KubeletAuthConfigPath,
 		CertManager: certManager,
 	})
 
