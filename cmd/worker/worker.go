@@ -134,6 +134,8 @@ func (c *Command) Start(ctx context.Context) error {
 
 	var staticPods worker.StaticPods
 
+	autopilotKubeletKubeconfigPath := kubeletKubeconfigPath
+
 	if workerConfig.NodeLocalLoadBalancing.IsEnabled() {
 		if c.SingleNode {
 			return errors.New("node-local load balancing cannot be used in a single-node cluster")
@@ -144,6 +146,7 @@ func (c *Command) Start(ctx context.Context) error {
 		if err != nil {
 			return fmt.Errorf("failed to create node-local load balancer reconciler: %w", err)
 		}
+		autopilotKubeletKubeconfigPath = reconciler.GetKubeletKubeconfigPath()
 		// If this is a controller+worker node, the kubelet should not use the NLLB kubelet kubeconfig
 		// path.
 		if !c.SingleNode && !c.EnableWorker {
@@ -204,7 +207,7 @@ func (c *Command) Start(ctx context.Context) error {
 
 	componentManager.Add(ctx, &worker.Autopilot{
 		K0sVars:     c.K0sVars,
-		Kubeconfig:  c.K0sVars.KubeletAuthConfigPath,
+		Kubeconfig:  autopilotKubeletKubeconfigPath,
 		CertManager: certManager,
 	})
 
