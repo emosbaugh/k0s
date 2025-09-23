@@ -649,6 +649,7 @@ func (c *command) startWorker(ctx context.Context, profile string, nodeConfig *v
 	wc.TokenArg = bootstrapConfig
 	wc.WorkerProfile = profile
 	wc.Labels = append(wc.Labels, fmt.Sprintf("%s=control-plane", constant.K0SNodeRoleLabel))
+	wc.IsController = true
 	if !c.SingleNode && !c.NoTaints {
 		wc.Taints = append(wc.Taints, fmt.Sprintf("%s/master=:NoSchedule", constant.NodeRoleLabelNamespace))
 	}
